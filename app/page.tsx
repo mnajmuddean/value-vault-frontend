@@ -102,8 +102,6 @@ export default function Page() {
     null
   );
 
-  console.log("items search result : ", itemsSearchResults);
-
   useEffect(() => {
     // Prefetch items and premises on mount
     const fetchAll = async () => {
