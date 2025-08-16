@@ -19,6 +19,7 @@ import {
   ArrowLeftRight,
   Check,
   BarChart3,
+  Loader2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -41,6 +42,10 @@ import { ItemsDataTable } from "@/components/ui/items-data-table";
 import Link from "next/link";
 
 export default function Page() {
+  // State for initial loading
+  const [initialLoading, setInitialLoading] = useState(true);
+  const [initialError, setInitialError] = useState<string | null>(null);
+
   // State for modal price data
   const [premisesLatestData, setPremisesLatestData] = useState<any[]>([]);
   const [premisesLatestLoading, setPremisesLatestLoading] = useState(false);
@@ -105,6 +110,9 @@ export default function Page() {
   useEffect(() => {
     // Prefetch items and premises on mount
     const fetchAll = async () => {
+      setInitialLoading(true);
+      setInitialError(null);
+
       try {
         // Always prefetch items from /api/items
         const items = await getItems();
@@ -119,16 +127,19 @@ export default function Page() {
         } else {
           setItemsData([]);
         }
-      } catch (e) {
-        setItemsData([]);
-      }
-      try {
+
         const premisesRes = await getPremises();
         setPremisesData(premisesRes.data);
       } catch (e) {
+        console.error("Failed to load initial data:", e);
+        setInitialError("Failed to load data. Please refresh the page.");
+        setItemsData([]);
         setPremisesData([]);
+      } finally {
+        setInitialLoading(false);
       }
     };
+
     fetchAll();
     // Reset premises selection state on first load
     setPremisesTouched(false);
@@ -250,6 +261,47 @@ export default function Page() {
     setComparisonError(null);
   };
 
+  // Loading component for initial data fetch
+  const InitialLoadingState = () => (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center space-y-4">
+        <Loader2 className="h-8 w-8 animate-spin text-primary mx-auto" />
+        <h2 className="text-xl font-semibold text-foreground">
+          Loading ValueVault
+        </h2>
+        <p className="text-muted-foreground">
+          Fetching the latest items and premises data...
+        </p>
+      </div>
+    </div>
+  );
+
+  // Error component for initial data fetch
+  const InitialErrorState = () => (
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="text-center space-y-4 max-w-md">
+        <div className="text-red-500 text-4xl">⚠️</div>
+        <h2 className="text-xl font-semibold text-foreground">
+          Failed to Load Data
+        </h2>
+        <p className="text-muted-foreground">{initialError}</p>
+        <Button onClick={() => window.location.reload()} className="mt-4">
+          Retry
+        </Button>
+      </div>
+    </div>
+  );
+
+  // Show loading state during initial data fetch
+  if (initialLoading) {
+    return <InitialLoadingState />;
+  }
+
+  // Show error state if initial data fetch failed
+  if (initialError) {
+    return <InitialErrorState />;
+  }
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -269,22 +321,7 @@ export default function Page() {
               >
                 Home
               </Link>
-              {/* <a
-                href="#"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                Track Products
-              </a>
-              <a
-                href="#"
-                className="text-muted-foreground hover:text-primary transition-colors"
-              >
-                Compare Prices
-              </a> */}
             </div>
-            {/* <Button variant="outline" size="sm">
-              Sign In
-            </Button> */}
           </div>
         </div>
       </nav>
@@ -347,8 +384,8 @@ export default function Page() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
             {itemsSearchActive && itemsSearchResults.length === 0 ? (
-              <div className="text-center text-muted-foreground py-8">
-                No items to display. Try searching above.
+              <div className="col-span-full text-center text-muted-foreground py-8">
+                No items found. Try searching with different keywords.
               </div>
             ) : Array.isArray(itemsData) && itemsData.length > 0 ? (
               (itemsSearchActive ? itemsSearchResults : itemsData).map(
@@ -418,15 +455,6 @@ export default function Page() {
                               </>
                             )}
                           </Button>
-                          {/* <Button
-                            size="sm"
-                            variant="ghost"
-                            className="flex-1 text-xs"
-                            tabIndex={-1}
-                          >
-                            <BarChart3 className="h-4 w-4 mr-1" />
-                            History
-                          </Button> */}
                         </div>
                       </CardContent>
                     </Card>
@@ -434,8 +462,8 @@ export default function Page() {
                 }
               )
             ) : (
-              <div className="text-center text-muted-foreground py-8">
-                No items to display. Try searching above.
+              <div className="col-span-full text-center text-muted-foreground py-8">
+                No items available at the moment. Please try again later.
               </div>
             )}
           </div>
@@ -637,7 +665,10 @@ export default function Page() {
                 </DialogHeader>
                 <div className="max-h-96 overflow-y-auto">
                   {premisesLatestLoading ? (
-                    <div className="text-center py-8">Loading...</div>
+                    <div className="text-center py-8">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary mx-auto mb-2" />
+                      Loading price data...
+                    </div>
                   ) : premisesLatestError ? (
                     <div className="text-center text-red-600 py-8">
                       {premisesLatestError}
@@ -656,7 +687,7 @@ export default function Page() {
                     />
                   ) : (
                     <div className="text-center text-muted-foreground py-8">
-                      No items to display.
+                      No price data available for this premises.
                     </div>
                   )}
                 </div>
@@ -703,9 +734,14 @@ export default function Page() {
                         }
                         className="px-8"
                       >
-                        {comparisonLoading
-                          ? "Comparing..."
-                          : `Compare Prices (${selectedPremises.length}/2+)`}
+                        {comparisonLoading ? (
+                          <>
+                            <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                            Comparing...
+                          </>
+                        ) : (
+                          `Compare Prices (${selectedPremises.length}/2+)`
+                        )}
                       </Button>
                       <Button variant="outline" onClick={resetComparison}>
                         Cancel
@@ -815,57 +851,6 @@ export default function Page() {
           </div>
         </section>
       )}
-
-      {/* Features Section */}
-      {/* <section className="py-16 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-4">
-              Why Choose ValueVault?
-            </h2>
-            <p className="text-muted-foreground">
-              Simple, powerful tools to help you save money on daily essentials
-            </p>
-          </div>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <TrendingUp className="h-6 w-6 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Real-time Tracking
-              </h3>
-              <p className="text-muted-foreground">
-                Monitor prices across Malaysian markets and supermarkets with
-                daily updates.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <Bell className="h-6 w-6 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Smart Alerts
-              </h3>
-              <p className="text-muted-foreground">
-                Get notified when prices drop for fresh goods and daily
-                essentials.
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="w-12 h-12 bg-accent/10 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <BarChart3 className="h-6 w-6 text-accent" />
-              </div>
-              <h3 className="text-xl font-semibold text-foreground mb-2">
-                Price History
-              </h3>
-              <p className="text-muted-foreground">
-                View detailed price trends to find the best times to shop.
-              </p>
-            </div>
-          </div>
-        </div>
-      </section> */}
 
       {/* Footer */}
       <footer className="border-t border-border bg-muted/30 py-12 px-4 sm:px-6 lg:px-8">
