@@ -1,6 +1,3 @@
-import { ENV } from "@/env";
-
-// lib/searchApi.ts
 export async function searchItems(query: string) {
   const res = await fetch(
     `${

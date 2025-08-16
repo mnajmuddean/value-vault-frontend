@@ -1,5 +1,3 @@
-import { ENV } from "@/env";
-
 export async function getPremisesLatest(premise_code: number) {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_VALUE_VAULT_API_URL}/api/premises/${premise_code}/latest`,

@@ -1,6 +1,3 @@
-import { ENV } from "@/env";
-
-// lib/searchPremisesApi.ts
 export async function searchPremises(keyword: string) {
   const res = await fetch(
     `${

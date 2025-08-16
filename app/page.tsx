@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
 import React from "react";
@@ -34,9 +36,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
-  DialogClose,
 } from "@/components/ui/dialog";
 import { ItemsDataTable } from "@/components/ui/items-data-table";
+import Link from "next/link";
 
 export default function Page() {
   // State for modal price data
@@ -82,7 +84,6 @@ export default function Page() {
   const [comparisonLoading, setComparisonLoading] = useState(false);
   const [comparisonError, setComparisonError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<any[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
   const [itemsData, setItemsData] = useState<any[]>([]);
@@ -149,7 +150,9 @@ export default function Page() {
       const data = await searchPremises(premisesSearchQuery);
       setPremisesSearchResults(data.data.rows || []);
     } catch (err: any) {
-      setPremisesSearchError("Premises search failed. Please try again.");
+      setPremisesSearchError(
+        "Premises search failed. Please try again. Error: " + err
+      );
       setPremisesSearchResults([]);
     } finally {
       setPremisesSearchLoading(false);
@@ -236,7 +239,7 @@ export default function Page() {
       setComparisonData(res.data);
       setShowComparison(true);
     } catch (err: any) {
-      setComparisonError("Comparison failed. Please try again.");
+      setComparisonError("Comparison failed. Please try again. Error: " + err);
     } finally {
       setComparisonLoading(false);
     }
@@ -262,12 +265,12 @@ export default function Page() {
               </span>
             </div>
             <div className="hidden md:flex items-center space-x-8">
-              <a
+              <Link
                 href="/"
                 className="text-foreground hover:text-primary transition-colors"
               >
                 Home
-              </a>
+              </Link>
               {/* <a
                 href="#"
                 className="text-muted-foreground hover:text-primary transition-colors"
@@ -510,7 +513,7 @@ export default function Page() {
             {(premisesSearchQuery && premisesSearchResults.length > 0
               ? premisesSearchResults
               : premisesData
-            ).map((premise, index, arr) => {
+            ).map((premise, index) => {
               return (
                 <Card
                   key={premise.premise_code || index}

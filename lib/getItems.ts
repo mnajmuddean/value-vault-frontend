@@ -1,5 +1,3 @@
-import { ENV } from "@/env";
-
 export async function getItems() {
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_VALUE_VAULT_API_URL}/api/items`,

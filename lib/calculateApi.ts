@@ -1,6 +1,3 @@
-import { ENV } from "@/env";
-
-// lib/calculateApi.ts
 export async function calculateComparison(
   itemCode: number,
   premiseCodes: number[]
